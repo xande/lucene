@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.codecs.hnsw.FlatVectorsScorer;
 import org.apache.lucene.index.KnnVectorValues;
 import org.apache.lucene.index.VectorSimilarityFunction;
+import org.apache.lucene.util.VectorUtil;
 import org.apache.lucene.util.hnsw.RandomVectorScorer;
 import org.apache.lucene.util.hnsw.RandomVectorScorerSupplier;
 import org.apache.lucene.util.hnsw.UpdateableRandomVectorScorer;
@@ -116,9 +117,16 @@ public class TurboQuantVectorsScorer implements FlatVectorsScorer {
       float docNorm = quantizedValues.getNorm(node);
 
       return switch (similarityFunction) {
-        case DOT_PRODUCT, MAXIMUM_INNER_PRODUCT -> {
+        case DOT_PRODUCT -> {
           float dot = TurboQuantScoringUtil.dotProduct(rotatedQuery, packedIndices, centroids, b, d);
-          yield Math.max((1 + dot * docNorm) / 2, 0);
+          // DOT_PRODUCT expects unit vectors; dot already approximates true dot product
+          yield Math.max((1 + dot) / 2, 0);
+        }
+        case MAXIMUM_INNER_PRODUCT -> {
+          float dot = TurboQuantScoringUtil.dotProduct(rotatedQuery, packedIndices, centroids, b, d);
+          // Reconstruct unnormalized dot product: query is already unnormalized, doc was normalized
+          float rawDot = dot * docNorm;
+          yield VectorUtil.scaleMaxInnerProductScore(rawDot);
         }
         case COSINE -> {
           float dot = TurboQuantScoringUtil.dotProduct(rotatedQuery, packedIndices, centroids, b, d);
@@ -178,8 +186,10 @@ public class TurboQuantVectorsScorer implements FlatVectorsScorer {
             dot += centroids[curIndices[i] & 0xFF] * centroids[nodeIndices[i] & 0xFF];
           }
           return switch (similarityFunction) {
-            case DOT_PRODUCT, MAXIMUM_INNER_PRODUCT ->
-                Math.max((1 + dot * currentNorm * nodeNorm) / 2, 0);
+            case DOT_PRODUCT ->
+                Math.max((1 + dot) / 2, 0);
+            case MAXIMUM_INNER_PRODUCT ->
+                VectorUtil.scaleMaxInnerProductScore(dot * currentNorm * nodeNorm);
             case COSINE -> Math.max((1 + dot) / 2, 0);
             case EUCLIDEAN -> {
               float dist = 0;

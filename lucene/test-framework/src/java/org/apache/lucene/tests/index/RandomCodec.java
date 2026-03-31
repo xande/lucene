@@ -40,6 +40,8 @@ import org.apache.lucene.codecs.lucene90.Lucene90PointsWriter;
 import org.apache.lucene.codecs.lucene99.Lucene99HnswVectorsFormat;
 import org.apache.lucene.codecs.memory.DirectPostingsFormat;
 import org.apache.lucene.codecs.memory.FSTPostingsFormat;
+import org.apache.lucene.codecs.turboquant.TurboQuantEncoding;
+import org.apache.lucene.codecs.turboquant.TurboQuantHnswVectorsFormat;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.PointValues;
 import org.apache.lucene.index.PointValues.IntersectVisitor;
@@ -296,6 +298,15 @@ public class RandomCodec extends AssertingCodec {
             concurrentKnnMerging ? ForkJoinPool.commonPool() : null,
             0),
         new AssertingKnnVectorsFormat());
+
+    TurboQuantEncoding[] tqEncodings = TurboQuantEncoding.values();
+    TurboQuantEncoding tqEncoding = tqEncodings[random.nextInt(tqEncodings.length)];
+    addKnn(
+        avoidCodecs,
+        new TurboQuantHnswVectorsFormat(
+            tqEncoding,
+            TestUtil.nextInt(random, 5, 50),
+            TestUtil.nextInt(random, 10, 50)));
 
     Collections.shuffle(formats, random);
     Collections.shuffle(dvFormats, random);
