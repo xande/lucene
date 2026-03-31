@@ -60,8 +60,8 @@
  *   <li>Maximum dimension: 16384
  * </ul>
  *
- * @see org.apache.lucene.codecs.turboquant.TurboQuantHnswVectorsFormat
- * @see org.apache.lucene.codecs.turboquant.TurboQuantFlatVectorsFormat
- * @see org.apache.lucene.codecs.turboquant.TurboQuantEncoding
+ * @see org.apache.lucene.sandbox.codecs.turboquant.TurboQuantHnswVectorsFormat
+ * @see org.apache.lucene.sandbox.codecs.turboquant.TurboQuantFlatVectorsFormat
+ * @see org.apache.lucene.sandbox.codecs.turboquant.TurboQuantEncoding
  */
-package org.apache.lucene.codecs.turboquant;
+package org.apache.lucene.sandbox.codecs.turboquant;

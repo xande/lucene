@@ -18,11 +18,11 @@ package org.apache.lucene.benchmark.jmh;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import org.apache.lucene.codecs.turboquant.BetaCodebook;
-import org.apache.lucene.codecs.turboquant.HadamardRotation;
-import org.apache.lucene.codecs.turboquant.TurboQuantBitPacker;
-import org.apache.lucene.codecs.turboquant.TurboQuantEncoding;
-import org.apache.lucene.codecs.turboquant.TurboQuantScoringUtil;
+import org.apache.lucene.sandbox.codecs.turboquant.BetaCodebook;
+import org.apache.lucene.sandbox.codecs.turboquant.HadamardRotation;
+import org.apache.lucene.sandbox.codecs.turboquant.TurboQuantBitPacker;
+import org.apache.lucene.sandbox.codecs.turboquant.TurboQuantEncoding;
+import org.apache.lucene.sandbox.codecs.turboquant.TurboQuantScoringUtil;
 import org.openjdk.jmh.annotations.*;
 
 /** JMH benchmarks for TurboQuant core operations. */

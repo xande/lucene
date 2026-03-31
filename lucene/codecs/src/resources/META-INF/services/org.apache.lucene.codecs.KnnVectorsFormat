@@ -14,4 +14,3 @@
 #  limitations under the License.
 
 org.apache.lucene.codecs.bitvectors.HnswBitVectorsFormat
-org.apache.lucene.codecs.turboquant.TurboQuantHnswVectorsFormat

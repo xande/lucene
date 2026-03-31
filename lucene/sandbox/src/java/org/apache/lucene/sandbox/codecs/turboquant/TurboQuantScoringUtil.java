@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.lucene.codecs.turboquant;
+package org.apache.lucene.sandbox.codecs.turboquant;
 
 /**
  * Optimized scoring utilities for TurboQuant quantized vectors. Uses LUT-based approach where

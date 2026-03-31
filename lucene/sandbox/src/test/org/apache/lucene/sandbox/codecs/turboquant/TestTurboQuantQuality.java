@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.lucene.codecs.turboquant;
+package org.apache.lucene.sandbox.codecs.turboquant;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -45,26 +45,31 @@ public class TestTurboQuantQuality extends LuceneTestCase {
   }
 
   /** 4.1: Recall validation at d=128 b=4 (smaller dim for fast CI). */
+
   public void testRecallBits4() throws IOException {
     doRecallTest(128, 500, TurboQuantEncoding.BITS_4, 0.8f);
   }
 
   /** 4.1: Recall at d=768 b=4 per plan spec. */
+
   public void testRecallD768Bits4() throws IOException {
     doRecallTest(768, 200, TurboQuantEncoding.BITS_4, 0.8f);
   }
 
   /** 4.1: Recall at b=8 should be very high. */
+
   public void testRecallBits8() throws IOException {
     doRecallTest(64, 200, TurboQuantEncoding.BITS_8, 0.9f);
   }
 
   /** 4.1: Recall at b=2 should be reasonable. */
+
   public void testRecallBits2() throws IOException {
     doRecallTest(64, 200, TurboQuantEncoding.BITS_2, 0.5f);
   }
 
   /** 4.1: Randomized dimension. */
+
   public void testRecallRandomDim() throws IOException {
     int d = random().nextInt(32, 257);
     doRecallTest(d, 200, TurboQuantEncoding.BITS_4, 0.6f);

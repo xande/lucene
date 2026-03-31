@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.lucene.codecs.turboquant;
+package org.apache.lucene.sandbox.codecs.turboquant;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -39,7 +39,6 @@ import org.apache.lucene.util.VectorUtil;
  * Recall validation at plan-specified dimensions and vector counts. These tests are heavier than
  * the fast CI tests in TestTurboQuantQuality.
  */
-@LuceneTestCase.Nightly
 public class TestTurboQuantRecall extends LuceneTestCase {
 
   /** Plan spec: d=768 b=4 recall@10 ≥ 0.9. Use k=50 over-retrieval to compensate for quantization. */
