@@ -229,7 +229,7 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 **All of the following must pass before starting Phase 4:**
 - [x] All Phase 2 gate tests still pass with SIMD scorer (no regression)
 - [x] SIMD vs naive agreement within 1e-6 for all encodings and similarity functions
-- [ ] Performance improvement measured: SIMD scorer is ≥ 2x faster than naive at d=4096
+- [ ] Performance improvement measured: SIMD scorer is ≥ 2x faster than naive at d=4096 *(JMH benchmark created in TurboQuantBenchmark.java — run with `gradlew :lucene:benchmark-jmh:jmh`)*
 - [x] No new test failures in `BaseKnnVectorsFormatTestCase`
 
 ---
@@ -288,8 +288,8 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 - [x] All edge case tests pass
 - [x] All merge stress tests pass
 - [x] CheckIndex validates TurboQuant segments correctly
-- [ ] No test failures in full `ant test` run with randomized codec selection
-- [ ] Performance benchmarks documented with comparison to scalar quant
+- [ ] No test failures in full `ant test` run with randomized codec selection *(run: `gradlew test -Dtests.codec=random`)*
+- [ ] Performance benchmarks documented with comparison to scalar quant *(run: `gradlew :lucene:benchmark-jmh:jmh -Pjmh.includes=TurboQuant`)*
 
 ---
 
