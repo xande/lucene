@@ -315,9 +315,9 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 - Patch/PR with all code, tests, and documentation
 
 #### 5.4 Final verification
-- [ ] `ant precommit` passes (formatting, javadoc, forbidden APIs)
-- [ ] `ant test -Dtests.codec=TurboQuantHnsw` passes
-- [ ] No external dependencies (pure Java + precomputed constants)
-- [ ] All files have ASF license headers
+- [x] `ant precommit` passes (formatting, javadoc, forbidden APIs)
+- [x] `ant test -Dtests.codec=TurboQuantHnsw` passes
+- [x] No external dependencies (pure Java + precomputed constants)
+- [x] All files have ASF license headers
 
 ---
