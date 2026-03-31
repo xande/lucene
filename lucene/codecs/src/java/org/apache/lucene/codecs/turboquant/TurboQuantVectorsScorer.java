@@ -115,32 +115,19 @@ public class TurboQuantVectorsScorer implements FlatVectorsScorer {
       int b = quantizedValues.getBitsPerCoordinate();
       float docNorm = quantizedValues.getNorm(node);
 
-      // Unpack indices
-      byte[] indices = new byte[d];
-      TurboQuantBitPacker.unpack(packedIndices, b, d, indices);
-
-      // Compute score in rotated space
       return switch (similarityFunction) {
         case DOT_PRODUCT, MAXIMUM_INNER_PRODUCT -> {
-          float dot = 0;
-          for (int i = 0; i < d; i++) {
-            dot += rotatedQuery[i] * centroids[indices[i] & 0xFF];
-          }
+          float dot = TurboQuantScoringUtil.dotProduct(rotatedQuery, packedIndices, centroids, b, d);
           yield Math.max((1 + dot * docNorm) / 2, 0);
         }
         case COSINE -> {
-          float dot = 0;
-          for (int i = 0; i < d; i++) {
-            dot += rotatedQuery[i] * centroids[indices[i] & 0xFF];
-          }
+          float dot = TurboQuantScoringUtil.dotProduct(rotatedQuery, packedIndices, centroids, b, d);
           yield Math.max((1 + dot) / 2, 0);
         }
         case EUCLIDEAN -> {
-          float dist = 0;
-          for (int i = 0; i < d; i++) {
-            float diff = rotatedQuery[i] - centroids[indices[i] & 0xFF] * docNorm;
-            dist += diff * diff;
-          }
+          float dist =
+              TurboQuantScoringUtil.squareDistance(
+                  rotatedQuery, packedIndices, centroids, b, d, docNorm);
           yield 1 / (1 + dist);
         }
       };

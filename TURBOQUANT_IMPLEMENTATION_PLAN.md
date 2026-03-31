@@ -186,7 +186,7 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 - [x] `testRandomExceptions()` passes (no resource leaks)
 - [x] `testCheckIntegrityReadsAllBytes()` passes
 - [x] Merge tests pass (byte-copy, seed mismatch fallback, deleted docs)
-- [ ] Index + search works at d=4096 and d=768
+- [x] Index + search works at d=4096 and d=768
 
 ---
 
@@ -227,10 +227,10 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 #### Phase 3 Gate
 
 **All of the following must pass before starting Phase 4:**
-- [ ] All Phase 2 gate tests still pass with SIMD scorer (no regression)
-- [ ] SIMD vs naive agreement within 1e-6 for all encodings and similarity functions
+- [x] All Phase 2 gate tests still pass with SIMD scorer (no regression)
+- [x] SIMD vs naive agreement within 1e-6 for all encodings and similarity functions
 - [ ] Performance improvement measured: SIMD scorer is ≥ 2x faster than naive at d=4096
-- [ ] No new test failures in `BaseKnnVectorsFormatTestCase`
+- [x] No new test failures in `BaseKnnVectorsFormatTestCase`
 
 ---
 
