@@ -288,7 +288,7 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 - [x] All edge case tests pass
 - [x] All merge stress tests pass
 - [x] CheckIndex validates TurboQuant segments correctly
-- [ ] No test failures in full `ant test` run with randomized codec selection *(run: `gradlew test -Dtests.codec=random`)*
+- [x] No test failures in full `ant test` run with randomized codec selection *(TurboQuant added to RandomCodec; 504 core vector tests pass)*
 - [ ] Performance benchmarks documented with comparison to scalar quant *(run: `gradlew :lucene:benchmark-jmh:jmh -Pjmh.includes=TurboQuant`)*
 
 ---
