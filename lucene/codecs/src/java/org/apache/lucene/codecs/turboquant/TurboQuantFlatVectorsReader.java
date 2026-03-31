@@ -149,7 +149,7 @@ public class TurboQuantFlatVectorsReader extends FlatVectorsReader
   @Override
   public org.apache.lucene.index.ByteVectorValues getByteVectorValues(String field)
       throws IOException {
-    throw new UnsupportedOperationException("TurboQuant only supports float32 vectors");
+    return rawVectorsReader.getByteVectorValues(field);
   }
 
   @Override
@@ -165,7 +165,7 @@ public class TurboQuantFlatVectorsReader extends FlatVectorsReader
 
   @Override
   public RandomVectorScorer getRandomVectorScorer(String field, byte[] target) throws IOException {
-    throw new UnsupportedOperationException("TurboQuant only supports float32 vectors");
+    return rawVectorsReader.getRandomVectorScorer(field, target);
   }
 
   @Override

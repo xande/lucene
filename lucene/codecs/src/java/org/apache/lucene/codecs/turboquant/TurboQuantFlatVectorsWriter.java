@@ -253,36 +253,38 @@ public class TurboQuantFlatVectorsWriter extends FlatVectorsWriter {
 
     // Copy temp data to the real output
     long vectorDataOffset = quantizedVectorData.alignFilePointer(Float.BYTES);
-    try (IndexInput tempInput =
-        segmentWriteState.directory.openInput(tempName, segmentWriteState.context)) {
+    IndexInput tempInput =
+        segmentWriteState.directory.openInput(tempName, segmentWriteState.context);
+    try {
       quantizedVectorData.copyBytes(tempInput, tempInput.length() - CodecUtil.footerLength());
+    } catch (Throwable t) {
+      IOUtils.closeWhileSuppressingExceptions(t, tempInput);
+      throw t;
     }
     long vectorDataLength = quantizedVectorData.getFilePointer() - vectorDataOffset;
 
     writeMeta(fieldInfo, vectorDataOffset, vectorDataLength, vectorCount, seed);
 
-    // Clean up temp file
-    segmentWriteState.directory.deleteFile(tempName);
-
-    // Return scorer supplier over the merged quantized data
+    // Use the temp file for the scorer (the real .vetq is still open for writing)
     final int finalVectorCount = vectorCount;
-    IndexInput scorerInput =
-        segmentWriteState.directory.openInput(
-            IndexFileNames.segmentFileName(
-                segmentWriteState.segmentInfo.name,
-                segmentWriteState.segmentSuffix,
-                TurboQuantFlatVectorsFormat.VECTOR_DATA_EXTENSION),
-            segmentWriteState.context);
-
     OffHeapTurboQuantVectorValues quantizedValues =
         new OffHeapTurboQuantVectorValues(
-            d, finalVectorCount, encoding, vectorDataOffset, scorerInput, centroids, rotation);
+            d,
+            finalVectorCount,
+            encoding,
+            0, // temp file starts at 0
+            tempInput,
+            centroids,
+            rotation);
 
     RandomVectorScorerSupplier scorerSupplier =
         vectorsScorer.getRandomVectorScorerSupplier(
             fieldInfo.getVectorSimilarityFunction(), quantizedValues);
 
-    return new TurboQuantCloseableScorerSupplier(scorerSupplier, scorerInput, finalVectorCount);
+    return new TurboQuantCloseableScorerSupplier(scorerSupplier, () -> {
+      IOUtils.close(tempInput);
+      segmentWriteState.directory.deleteFile(tempName);
+    }, finalVectorCount);
   }
 
   @Override
@@ -386,11 +388,11 @@ public class TurboQuantFlatVectorsWriter extends FlatVectorsWriter {
   private static class TurboQuantCloseableScorerSupplier
       implements CloseableRandomVectorScorerSupplier {
     private final RandomVectorScorerSupplier delegate;
-    private final IndexInput toClose;
+    private final java.io.Closeable toClose;
     private final int totalVectorCount;
 
     TurboQuantCloseableScorerSupplier(
-        RandomVectorScorerSupplier delegate, IndexInput toClose, int totalVectorCount) {
+        RandomVectorScorerSupplier delegate, java.io.Closeable toClose, int totalVectorCount) {
       this.delegate = delegate;
       this.toClose = toClose;
       this.totalVectorCount = totalVectorCount;

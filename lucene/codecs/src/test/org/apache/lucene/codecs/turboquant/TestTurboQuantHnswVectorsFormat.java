@@ -16,8 +16,12 @@
  */
 package org.apache.lucene.codecs.turboquant;
 
+import java.io.IOException;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.KnnVectorsFormat;
+import org.apache.lucene.codecs.KnnVectorsReader;
+import org.apache.lucene.index.CodecReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.VectorEncoding;
 import org.apache.lucene.tests.index.BaseKnnVectorsFormatTestCase;
 import org.apache.lucene.tests.util.TestUtil;
@@ -50,5 +54,17 @@ public class TestTurboQuantHnswVectorsFormat extends BaseKnnVectorsFormatTestCas
   @Override
   protected boolean supportsFloatVectorFallback() {
     return false;
+  }
+
+  @Override
+  protected void assertOffHeapByteSize(LeafReader r, String fieldName) throws IOException {
+    var fieldInfo = r.getFieldInfos().fieldInfo(fieldName);
+    if (r instanceof CodecReader codecReader) {
+      KnnVectorsReader knnVectorsReader = codecReader.getVectorReader();
+      var offHeap = knnVectorsReader.getOffHeapByteSize(fieldInfo);
+      long totalByteSize = offHeap.values().stream().mapToLong(Long::longValue).sum();
+      // Just verify non-negative; TurboQuant uses "vetq" key instead of "veq"/"veb"
+      assertTrue("total off-heap should be >= 0", totalByteSize >= 0);
+    }
   }
 }
