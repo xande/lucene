@@ -27,6 +27,7 @@ module org.apache.lucene.codecs {
   exports org.apache.lucene.codecs.bloom;
   exports org.apache.lucene.codecs.memory;
   exports org.apache.lucene.codecs.simpletext;
+  exports org.apache.lucene.codecs.turboquant;
   exports org.apache.lucene.codecs.uniformsplit;
   exports org.apache.lucene.codecs.uniformsplit.sharedterms;
 

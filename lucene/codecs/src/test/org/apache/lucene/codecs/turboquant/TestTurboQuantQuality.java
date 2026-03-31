@@ -49,6 +49,11 @@ public class TestTurboQuantQuality extends LuceneTestCase {
     doRecallTest(128, 500, TurboQuantEncoding.BITS_4, 0.8f);
   }
 
+  /** 4.1: Recall at d=768 b=4 per plan spec. */
+  public void testRecallD768Bits4() throws IOException {
+    doRecallTest(768, 200, TurboQuantEncoding.BITS_4, 0.8f);
+  }
+
   /** 4.1: Recall at b=8 should be very high. */
   public void testRecallBits8() throws IOException {
     doRecallTest(64, 200, TurboQuantEncoding.BITS_8, 0.9f);
@@ -57,6 +62,12 @@ public class TestTurboQuantQuality extends LuceneTestCase {
   /** 4.1: Recall at b=2 should be reasonable. */
   public void testRecallBits2() throws IOException {
     doRecallTest(64, 200, TurboQuantEncoding.BITS_2, 0.5f);
+  }
+
+  /** 4.1: Randomized dimension. */
+  public void testRecallRandomDim() throws IOException {
+    int d = random().nextInt(32, 257);
+    doRecallTest(d, 200, TurboQuantEncoding.BITS_4, 0.6f);
   }
 
   /** 4.3: Empty segment — index, search succeeds. */
@@ -174,6 +185,42 @@ public class TestTurboQuantQuality extends LuceneTestCase {
     }
   }
 
+  /** 4.4: 10 segments → force merge to 1. */
+  public void testForceMerge10Segments() throws IOException {
+    int dim = 32;
+    int totalVectors = 0;
+    try (Directory dir = newDirectory()) {
+      IndexWriterConfig iwc = new IndexWriterConfig();
+      iwc.setCodec(getCodec(TurboQuantEncoding.BITS_4));
+      java.util.Random rng = new java.util.Random(99);
+
+      try (IndexWriter w = new IndexWriter(dir, iwc)) {
+        for (int seg = 0; seg < 10; seg++) {
+          for (int i = 0; i < 10; i++) {
+            Document doc = new Document();
+            doc.add(new KnnFloatVectorField("vec", randomUnitVector(dim, rng),
+                VectorSimilarityFunction.DOT_PRODUCT));
+            w.addDocument(doc);
+            totalVectors++;
+          }
+          w.commit();
+        }
+
+        w.forceMerge(1);
+        w.commit();
+
+        try (DirectoryReader reader = DirectoryReader.open(w)) {
+          assertEquals(1, reader.leaves().size());
+          IndexSearcher searcher = new IndexSearcher(reader);
+          float[] query = randomUnitVector(dim, rng);
+          TopDocs results =
+              searcher.search(new KnnFloatVectorQuery("vec", query, totalVectors), totalVectors);
+          assertEquals(totalVectors, results.totalHits.value());
+        }
+      }
+    }
+  }
+
   /** 4.2: All similarity functions produce valid scores. */
   public void testAllSimilarityFunctions() throws IOException {
     int dim = 32;
@@ -181,26 +228,28 @@ public class TestTurboQuantQuality extends LuceneTestCase {
     java.util.Random rng = new java.util.Random(42);
 
     for (VectorSimilarityFunction sim : VectorSimilarityFunction.values()) {
-      try (Directory dir = newDirectory()) {
-        IndexWriterConfig iwc = new IndexWriterConfig();
-        iwc.setCodec(getCodec(TurboQuantEncoding.BITS_4));
-        try (IndexWriter w = new IndexWriter(dir, iwc)) {
-          for (int i = 0; i < numVectors; i++) {
-            Document doc = new Document();
-            float[] vec = randomUnitVector(dim, rng);
-            doc.add(new KnnFloatVectorField("vec", vec, sim));
-            w.addDocument(doc);
-          }
-          w.commit();
-          try (DirectoryReader reader = DirectoryReader.open(w)) {
-            IndexSearcher searcher = new IndexSearcher(reader);
-            float[] query = randomUnitVector(dim, rng);
-            TopDocs results =
-                searcher.search(new KnnFloatVectorQuery("vec", query, 5), 5);
-            assertTrue(sim + ": expected results", results.totalHits.value() > 0);
-            for (var sd : results.scoreDocs) {
-              assertFalse(sim + ": NaN score", Float.isNaN(sd.score));
-              assertTrue(sim + ": negative score", sd.score >= 0);
+      for (TurboQuantEncoding enc : TurboQuantEncoding.values()) {
+        try (Directory dir = newDirectory()) {
+          IndexWriterConfig iwc = new IndexWriterConfig();
+          iwc.setCodec(getCodec(enc));
+          try (IndexWriter w = new IndexWriter(dir, iwc)) {
+            for (int i = 0; i < numVectors; i++) {
+              Document doc = new Document();
+              float[] vec = randomUnitVector(dim, rng);
+              doc.add(new KnnFloatVectorField("vec", vec, sim));
+              w.addDocument(doc);
+            }
+            w.commit();
+            try (DirectoryReader reader = DirectoryReader.open(w)) {
+              IndexSearcher searcher = new IndexSearcher(reader);
+              float[] query = randomUnitVector(dim, rng);
+              TopDocs results =
+                  searcher.search(new KnnFloatVectorQuery("vec", query, 5), 5);
+              assertTrue(sim + "/" + enc + ": expected results", results.totalHits.value() > 0);
+              for (var sd : results.scoreDocs) {
+                assertFalse(sim + "/" + enc + ": NaN score", Float.isNaN(sd.score));
+                assertTrue(sim + "/" + enc + ": negative score", sd.score >= 0);
+              }
             }
           }
         }

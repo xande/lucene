@@ -169,6 +169,74 @@ public class TestHadamardRotation extends LuceneTestCase {
     }
   }
 
+  /**
+   * Block-diagonal MSE at d=768 should be within 5% of a single-block Hadamard at d=1024 (padded).
+   * This validates that the block-diagonal approach doesn't degrade quantization quality.
+   */
+  public void testBlockDiagonalMseQuality() {
+    int d = 768;
+    int b = 4;
+    int numVectors = 1000;
+    java.util.Random rng = new java.util.Random(42);
+    float[] centroids768 = BetaCodebook.centroids(d, b);
+    float[] boundaries768 = BetaCodebook.boundaries(d, b);
+    HadamardRotation rot768 = HadamardRotation.create(d, 12345L);
+
+    // Also test with d=1024 (power of 2, single block) for comparison
+    int dRef = 1024;
+    float[] centroidsRef = BetaCodebook.centroids(dRef, b);
+    float[] boundariesRef = BetaCodebook.boundaries(dRef, b);
+    HadamardRotation rotRef = HadamardRotation.create(dRef, 12345L);
+
+    double mse768 = 0, mseRef = 0;
+    for (int v = 0; v < numVectors; v++) {
+      // d=768 block-diagonal
+      float[] x768 = randomUnitVector(d, rng);
+      float[] rotated768 = new float[d];
+      rot768.rotate(x768, rotated768);
+      double err768 = 0;
+      for (int i = 0; i < d; i++) {
+        int idx = BetaCodebook.quantize(rotated768[i], boundaries768);
+        double diff = rotated768[i] - centroids768[idx];
+        err768 += diff * diff;
+      }
+      mse768 += err768;
+
+      // d=1024 single block reference
+      float[] xRef = randomUnitVector(dRef, rng);
+      float[] rotatedRef = new float[dRef];
+      rotRef.rotate(xRef, rotatedRef);
+      double errRef = 0;
+      for (int i = 0; i < dRef; i++) {
+        int idx = BetaCodebook.quantize(rotatedRef[i], boundariesRef);
+        double diff = rotatedRef[i] - centroidsRef[idx];
+        errRef += diff * diff;
+      }
+      mseRef += errRef;
+    }
+    mse768 /= numVectors;
+    mseRef /= numVectors;
+
+    // Block-diagonal MSE should be within 5% of single-block MSE
+    double ratio = mse768 / mseRef;
+    assertTrue(
+        "Block-diagonal MSE ratio " + ratio + " exceeds 5% threshold (768 mse="
+            + mse768 + ", 1024 mse=" + mseRef + ")",
+        ratio < 1.05 && ratio > 0.95);
+  }
+
+  private static float[] randomUnitVector(int d, java.util.Random rng) {
+    float[] v = new float[d];
+    float norm = 0;
+    for (int i = 0; i < d; i++) {
+      v[i] = (float) rng.nextGaussian();
+      norm += v[i] * v[i];
+    }
+    norm = (float) Math.sqrt(norm);
+    for (int i = 0; i < d; i++) v[i] /= norm;
+    return v;
+  }
+
   public void testOneHotVectors() {
     int d = 128;
     HadamardRotation rot = HadamardRotation.create(d, 42L);

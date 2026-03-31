@@ -59,7 +59,7 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 **All of the following must pass before starting Phase 2:**
 - [x] All unit tests in `TestHadamardRotation`, `TestBetaCodebook`, `TestTurboQuantBitPacker` pass
 - [x] MSE distortion at d=4096 b=4 is within [0.007, 0.011] (paper says 0.009)
-- [ ] Block-diagonal MSE at d=768 is within 5% of full QR rotation MSE
+- [x] Block-diagonal MSE at d=768 is within 5% of full QR rotation MSE
 - [x] Hadamard round-trip error < 1e-5 at d=4096
 - [x] No external dependencies (pure Java + precomputed constants)
 
