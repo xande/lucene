@@ -283,11 +283,11 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 #### Phase 4 Gate
 
 **All of the following must pass before starting Phase 5:**
-- [ ] Recall@10 ≥ 0.9 at d=4096 b=4
-- [ ] Recall@10 ≥ 0.9 at d=768 b=4
-- [ ] All edge case tests pass
-- [ ] All merge stress tests pass
-- [ ] CheckIndex validates TurboQuant segments correctly
+- [x] Recall@10 ≥ 0.9 at d=4096 b=4
+- [x] Recall@10 ≥ 0.9 at d=768 b=4
+- [x] All edge case tests pass
+- [x] All merge stress tests pass
+- [x] CheckIndex validates TurboQuant segments correctly
 - [ ] No test failures in full `ant test` run with randomized codec selection
 - [ ] Performance benchmarks documented with comparison to scalar quant
 
