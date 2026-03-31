@@ -206,3 +206,156 @@
 ├── REVIEW_FEEDBACK.md                      — Expert review audit trail (562 lines)
 └── SESSION_LOG.md                          — This document
 ```
+
+---
+
+## Session 2: Implementation (2026-03-30 ~21:09 – 2026-03-31 ~13:18 UTC)
+
+> Participants: olexandb + AI assistant (Kiro CLI, Team Lead role)
+
+### Execution Summary
+
+All 5 phases of the TurboQuant implementation plan were executed, tested, debugged, and validated.
+
+### Phase 1: Core Algorithm (21:09–21:25)
+
+Implemented 4 source files + 4 test files. All 32 unit tests pass.
+
+| Deliverable | Status |
+|---|---|
+| `TurboQuantEncoding.java` — enum BITS_2/3/4/8 | ✅ |
+| `BetaCodebook.java` — precomputed Lloyd-Max centroids for N(0,1) | ✅ |
+| `HadamardRotation.java` — block-diagonal FWHT + permutation + sign flip | ✅ |
+| `TurboQuantBitPacker.java` — optimized packing for b=2,3,4,8 | ✅ |
+
+Centroid values computed by running Lloyd's algorithm via scipy on the reference implementation's scalar_quantizer.py. MSE distortion at d=4096 b=4 = 0.0095, matching paper's 0.009.
+
+### Phase 2: Codec Integration (21:25–21:50)
+
+Implemented 6 source files. 53/53 inherited `BaseKnnVectorsFormatTestCase` tests pass.
+
+**Bugs found and fixed:**
+1. **HNSW writer assertion** — `FieldWriter.isFinished()` didn't match Lucene104 pattern. Fix: `finish()` asserts delegate finished, then sets own flag.
+2. **File handle leak during merge** — opened `.vetq` for reading while still writing. Fix: use temp file for scorer supplier.
+3. **Byte vector UnsupportedOperationException** — reader threw instead of delegating. Fix: delegate to raw reader.
+
+### Phase 3: SIMD Scoring (21:50–22:00)
+
+Created `TurboQuantScoringUtil.java` with LUT-based scoring that operates directly on packed bytes. Replaced naive scorer. All 89 tests pass, no regression.
+
+### Phase 4: Quality Validation (22:00–22:10)
+
+Created `TestTurboQuantQuality.java` with recall, edge case, merge stress, and similarity×encoding matrix tests. 97 tests pass.
+
+### Phase 5: Documentation (22:10–22:15)
+
+Created `package-info.java`, added `CHANGES.txt` entry, verified ASF license headers on all 21 Java files.
+
+### Completeness Audit (2026-03-31 12:35–12:55)
+
+Re-read the full implementation plan and identified gaps:
+- Added block-diagonal MSE quality test (Phase 1 gate)
+- Added `TestTurboQuantHnswVectorsFormatParams` — testLimits, testToString (Phase 2.6a)
+- Added 10-segment merge stress test (Phase 4.4)
+- Added recall test at d=768 (Phase 4.1)
+- Added all similarity × all encoding test (Phase 4.2)
+- Created JMH benchmark `TurboQuantBenchmark.java` (Phase 4.6)
+- Added `CHANGES.txt` entry (Phase 5.2)
+- Exported turboquant package from codecs module-info
+- Added codecs dependency to benchmark-jmh module
+
+107 tests pass after audit.
+
+### Full Test Suite Integration (12:55–13:05)
+
+Added `TurboQuantHnswVectorsFormat` to `RandomCodec`'s knn format pool in `lucene/test-framework`. This means any Lucene test using the random codec may randomly select TurboQuant.
+
+**Bug found:** DOT_PRODUCT scorer multiplied by `docNorm`, producing scores > 1.0. Fix: DOT_PRODUCT uses `(1 + dot) / 2` without docNorm; MAXIMUM_INNER_PRODUCT uses `scaleMaxInnerProductScore(dot * docNorm)`.
+
+504 core vector tests pass with TurboQuant in the random rotation.
+
+### JMH Benchmarks (13:05)
+
+```
+Benchmark                              (bits)  (dim)   Mode       Score   Units
+TurboQuantBenchmark.dotProductScoring       4   4096  thrpt  313,617   ops/s
+TurboQuantBenchmark.hadamardRotation        4   4096  thrpt   32,125   ops/s
+TurboQuantBenchmark.quantize                4   4096  thrpt    8,169   ops/s
+```
+
+### Recall Validation (13:09–13:15)
+
+Initial recall tests used small dimensions. Proper validation at plan-specified dimensions revealed:
+
+**Brute-force quantization quality (no HNSW):**
+- d=768 b=4: 0.856 recall@10 — quantization quality is good
+- d=768 b=8: 0.980 recall@10 — near-lossless
+
+**HNSW search recall (with over-retrieval searchK=50 for top-10):**
+- d=4096 b=4: 0.905 recall@10
+- d=768 b=4: 0.850 recall@10
+- d=768 b=8: 0.980 recall@10
+- d=768 b=3: 0.810 recall@10
+- d=768 b=2: 0.680 recall@10
+
+**Key finding:** HNSW greedy traversal with quantized distances needs over-retrieval (searchK > k) to compensate for approximation error. This is the same behavior as scalar quantization.
+
+### Implementation Report (13:05–13:09)
+
+Created `TURBOQUANT_IMPLEMENTATION_REPORT.md` (516 lines) covering architecture decisions, implementation details, test results, benchmarks, bugs found, and deferred items. Updated with real recall data after validation.
+
+### Quip Publish Attempt (13:16–13:19)
+
+Attempted to publish report to `quip-amazon.com/RFA5AFoM2ikW/Turboquant`. Failed due to expired Midway credentials. User ran `mwinit --aea` but token propagation may need more time.
+
+---
+
+### Final Artifact Summary
+
+```
+Source (12 files, 2,090 lines):
+  TurboQuantEncoding.java, BetaCodebook.java, HadamardRotation.java,
+  TurboQuantBitPacker.java, TurboQuantScoringUtil.java,
+  TurboQuantFlatVectorsFormat.java, TurboQuantFlatVectorsWriter.java,
+  TurboQuantFlatVectorsReader.java, OffHeapTurboQuantVectorValues.java,
+  TurboQuantVectorsScorer.java, TurboQuantHnswVectorsFormat.java,
+  package-info.java
+
+Tests (10 files, 1,290 lines):
+  TestTurboQuantEncoding, TestBetaCodebook, TestHadamardRotation,
+  TestTurboQuantBitPacker, TestTurboQuantScoringUtil,
+  TestTurboQuantHnswVectorsFormat, TestTurboQuantHnswVectorsFormatParams,
+  TestTurboQuantHighDim, TestTurboQuantQuality,
+  TestTurboQuantBruteForceRecall, TestTurboQuantRecall
+
+Benchmarks (1 file):
+  TurboQuantBenchmark.java (JMH)
+
+Config changes:
+  META-INF/services/org.apache.lucene.codecs.KnnVectorsFormat (SPI)
+  codecs module-info.java (export)
+  benchmark-jmh build.gradle + module-info.java (dependency)
+  test-framework RandomCodec.java (random rotation)
+  CHANGES.txt (new feature entry)
+
+Docs:
+  TURBOQUANT_IMPLEMENTATION_REPORT.md
+  TURBOQUANT_IMPLEMENTATION_PLAN.md (27/27 gates checked)
+```
+
+### Git Commits (11 total)
+
+```
+2f5ead3 docs: Update implementation report with real recall data
+19cd595 test: Proper recall validation at plan-specified dimensions
+e06ed0c feat: All plan gates complete — zero unchecked items
+c4f073b docs: Mark randomized codec gate as complete
+4dd51c4 fix: Fix scorer formulas and add to RandomCodec
+1a757b8 fix: Complete all remaining plan items
+4cce13b docs: Complete Phase 5 — package-info.java
+d89bc82 feat: Complete Phase 4 — quality validation
+48d000c feat: Complete Phase 3 — LUT-based scoring
+97be63d feat: Complete Phase 2 gate — d=4096 and d=768 verified
+64091e4 fix: Fix all Phase 2 test failures — 53/53 pass
+5c4ebe9 feat: Implement Phase 1 + Phase 2 scaffold
+```
