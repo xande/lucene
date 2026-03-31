@@ -175,17 +175,17 @@ Each phase has explicit entry criteria, deliverables, and gate tests that must p
 #### Phase 2 Gate
 
 **All of the following must pass before starting Phase 3:**
-- [ ] `TestTurboQuantFlatVectorsFormat` passes (write/read/score round-trip)
-- [ ] `TestTurboQuantHnswVectorsFormat extends BaseKnnVectorsFormatTestCase` passes (~50 inherited tests)
+- [x] `TestTurboQuantFlatVectorsFormat` passes (write/read/score round-trip)
+- [x] `TestTurboQuantHnswVectorsFormat extends BaseKnnVectorsFormatTestCase` passes (~50 inherited tests)
   - Override `randomVectorEncoding()` → FLOAT32
   - Override `getQuantizationBits()` → encoding bit-width
   - Override `supportsFloatVectorFallback()` → false
   - Override `assertOffHeapByteSize()` → check "vetq" key
   - Randomize encoding in `@Before`
-- [ ] All inherited tests pass: `testRandom`, `testRandomBytes`, `testSparseVectors`, `testDeleteAllVectorDocs`, `testSortedIndex`, `testCheckIndexIncludesVectors`, `testRecall`
-- [ ] `testRandomExceptions()` passes (no resource leaks)
-- [ ] `testCheckIntegrityReadsAllBytes()` passes
-- [ ] Merge tests pass (byte-copy, seed mismatch fallback, deleted docs)
+- [x] All inherited tests pass: `testRandom`, `testRandomBytes`, `testSparseVectors`, `testDeleteAllVectorDocs`, `testSortedIndex`, `testCheckIndexIncludesVectors`, `testRecall`
+- [x] `testRandomExceptions()` passes (no resource leaks)
+- [x] `testCheckIntegrityReadsAllBytes()` passes
+- [x] Merge tests pass (byte-copy, seed mismatch fallback, deleted docs)
 - [ ] Index + search works at d=4096 and d=768
 
 ---
