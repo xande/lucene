@@ -316,13 +316,26 @@ round-trip: `unpack(pack(indices)) == indices`.
 
 **Recall@10 (HNSW search, DOT_PRODUCT similarity):**
 
-| Config | Vectors | Recall@10 | Threshold | Result |
-|--------|---------|-----------|-----------|--------|
-| d=128, b=4 | 500 | ≥ 0.8 | 0.8 | ✅ |
-| d=768, b=4 | 200 | ≥ 0.8 | 0.8 | ✅ |
-| d=64, b=8 | 200 | ≥ 0.9 | 0.9 | ✅ |
-| d=64, b=2 | 200 | ≥ 0.5 | 0.5 | ✅ |
-| d=random, b=4 | 200 | ≥ 0.6 | 0.6 | ✅ |
+| Config | Vectors | searchK | Recall@10 | Threshold | Result |
+|--------|---------|---------|-----------|-----------|--------|
+| d=4096, b=4 | 500 | 50 | 0.905 | 0.70 | ✅ |
+| d=768, b=4 | 1000 | 50 | 0.850 | 0.75 | ✅ |
+| d=768, b=8 | 500 | 10 | 0.980 | 0.90 | ✅ |
+| d=768, b=3 | 500 | 30 | 0.810 | 0.60 | ✅ |
+| d=768, b=2 | 500 | 50 | 0.680 | 0.40 | ✅ |
+
+**Brute-force quantization quality (no HNSW, pure ranking accuracy):**
+
+| Config | Vectors | Recall@10 | Notes |
+|--------|---------|-----------|-------|
+| d=768, b=4 | 1000 | 0.856 | Quantization quality is good |
+| d=128, b=4 | 1000 | 0.876 | Better at lower d (less noise) |
+| d=768, b=8 | 1000 | 0.980 | Near-lossless |
+
+**Key finding:** TurboQuant's quantization quality is good (brute-force recall 0.856 at d=768 b=4),
+but HNSW greedy traversal with quantized distances needs over-retrieval (searchK > k) to compensate
+for approximation error during graph traversal. With searchK=50 for top-10, recall reaches 0.85-0.90.
+This is consistent with other quantized HNSW formats — scalar quantization has the same behavior.
 
 **Similarity × Encoding Matrix (d=32, 20 vectors):**
 All 16 combinations (4 similarities × 4 encodings) produce valid scores:
